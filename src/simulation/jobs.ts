@@ -1,10 +1,11 @@
 import * as THREE from'three';import type{BuildingData}from'../types';import type{Mover}from'./pathfinding';
-export type JobState='idle'|'walking'|'working'|'returning';
+export type JobState='idle'|'walking'|'working'|'returning'|'oxygen';
 export interface Worker{object:THREE.Group;mover:Mover;phase:number;name:string;profession:string;state:JobState;jobId:string|null;work:number}
 const professions=['Technik','Inženýr','Botanik','Geolog','Operátor'],home=new THREE.Vector3(0,0,3);
 export function initWorker<T extends{object:THREE.Group;mover:Mover;phase:number}>(c:T,i:number):T&Worker{return Object.assign(c,{name:'E-'+String(i+1).padStart(2,'0'),profession:professions[i%professions.length],state:'idle' as JobState,jobId:null as string|null,work:0})}
 function sendHome(w:Worker){w.state='returning';w.jobId=null;if(!w.mover.target)w.mover.setTarget(home.clone())}
 export function updateJobs(workers:Worker[],buildings:BuildingData[],dt:number){const sites=buildings.filter(b=>b.progress<1&&b.materialsDelivered);for(const w of workers){
+if(w.state==='oxygen')continue;
 if(w.state==='idle'){const site=sites.find(b=>!workers.some(o=>o!==w&&o.jobId===b.id));if(site){w.jobId=site.id;w.state='walking';w.mover.setTarget(new THREE.Vector3(site.position[0]+1.8,site.position[1],site.position[2]+1.8))}continue}
 if(w.state==='returning'){if(!w.mover.target)w.state='idle';continue}
 const site=w.jobId?buildings.find(b=>b.id===w.jobId):undefined;if(!site){sendHome(w);continue}
